@@ -1,0 +1,17 @@
+{
+  "author": {
+    "name": "Santiago Gimeno",
+    "email": "santiago.gimeno@gmail.com"
+  },
+  "name": "unix-stream",
+  "version": "0.0.1",
+  "description": "Unix stream socket",
+  "main": "src/unix_stream",
+  "engines": {
+    "node": ">=0.8.3"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "private": true
+}
