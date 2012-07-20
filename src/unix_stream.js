@@ -26,7 +26,9 @@ exports.createSocket = function(local_path) {
     var s = new Socket(fd);
     if (local_path) {
         if (bind(fd, local_path) == -1) {
-            s.emit('error', errnoException(errno, 'bind'));
+            process.nextTick(function() {
+                s.emit('error', errnoException(errno, 'bind'));
+            });
         }
 
         s.local_path = local_path;
