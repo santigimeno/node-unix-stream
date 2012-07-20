@@ -10,8 +10,15 @@
   "engines": {
     "node": ">=0.8.3"
   },
+  "license": {
+    "type": "ISC",
+    "url": "https://github.com/santigimeno/node-unix-stream/blob/master/LICENSE"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/santigimeno/node-unix-stream.git"
+  },
   "dependencies": {},
   "devDependencies": {},
-  "optionalDependencies": {},
-  "private": true
+  "optionalDependencies": {}
 }
