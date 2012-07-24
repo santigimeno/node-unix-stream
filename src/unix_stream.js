@@ -1,7 +1,9 @@
 var util = require('util');
 var Socket = require('net').Socket;
 
-var bindings = require(__dirname + '/../build/Debug/unix_stream.node');
+/* Make sure we choose the correct build directory */
+var directory = process.config.default_configuration === 'Debug' ? 'Debug' : 'Release';
+var bindings = require(__dirname + '/../build/' + directory + '/unix_stream.node');
 
 var SOCK_STREAM  = bindings.SOCK_STREAM;
 var AF_UNIX     = bindings.AF_UNIX;
