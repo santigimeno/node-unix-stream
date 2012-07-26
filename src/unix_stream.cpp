@@ -80,6 +80,31 @@ Handle<Value> Bind(const Arguments& args) {
     return scope.Close(Integer::New(ret));
 }
 
+Handle<Value> GetPeerName(const Arguments& args) {
+    HandleScope scope;
+    sockaddr_un sun;
+    int fd; 
+    int ret;
+
+    assert(args.Length() == 1); 
+    fd = args[0]->Int32Value();
+
+    socklen_t addrlen = sizeof(sun);
+    if ((ret = getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen)) == -1) {
+        SetErrno(errno);
+        return Null();
+    }   
+
+    Local<Object> info = Object::New();
+    static Persistent<String> path_sym;
+    if (path_sym.IsEmpty()) {
+        path_sym = NODE_PSYMBOL("path");
+    }   
+
+    info->Set(path_sym, String::New(sun.sun_path));
+    return scope.Close(info);
+}
+
 void Initialize(Handle<Object> target) {
 
     errno_symbol = Persistent<String>::New(String::NewSymbol("errno"));
@@ -87,6 +112,7 @@ void Initialize(Handle<Object> target) {
     target->Set(String::NewSymbol("SOCK_STREAM"), Integer::New(SOCK_STREAM));
     target->Set(String::NewSymbol("socket"), FunctionTemplate::New(Socket)->GetFunction());
     target->Set(String::NewSymbol("bind"), FunctionTemplate::New(Bind)->GetFunction());
+    target->Set(String::NewSymbol("getpeername"), FunctionTemplate::New(GetPeerName)->GetFunction());
 }
 
 }
