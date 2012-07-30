@@ -4,8 +4,14 @@
         "email": "santiago.gimeno@gmail.com"
     },
     "name": "unix-stream",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Unix stream socket",
+    "keywords": [
+        "unix",
+        "socket",
+        "stream",
+        "unix stream socket"
+    ],
     "main": "src/unix_stream",
     "engines": {
         "node": ">=0.8.3"
