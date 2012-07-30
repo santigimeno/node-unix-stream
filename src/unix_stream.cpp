@@ -4,6 +4,7 @@
 
 #include "uv.h"
 #include "node.h"
+#include "pipe_wrap.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
@@ -80,6 +81,48 @@ Handle<Value> Bind(const Arguments& args) {
     return scope.Close(Integer::New(ret));
 }
 
+Handle<Value> GetPeerName(const Arguments& args) {
+
+    HandleScope scope;
+    assert(args.Length() == 1);
+    Local<Object> obj = args[0]->ToObject();
+    assert(obj->InternalFieldCount() > 0);
+    int ret;
+    sockaddr_un sun;
+    socklen_t addrlen = sizeof(sun);
+    memset(&sun, '\0', addrlen);
+    PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
+    int fd = wrap->UVHandle()->fd;
+    if ((ret = getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen)) == -1) {
+        SetErrno(errno);
+        return Null();
+    }
+
+    /* If addrlen == 2 --> no path */
+    return addrlen == 2 ? Null() : scope.Close(String::New(sun.sun_path));
+}
+
+Handle<Value> GetSockName(const Arguments& args) {
+
+    HandleScope scope;
+    assert(args.Length() == 1);
+    Local<Object> obj = args[0]->ToObject();
+    assert(obj->InternalFieldCount() > 0);
+    int ret;
+    sockaddr_un sun;
+    socklen_t addrlen = sizeof(sun);
+    memset(&sun, '\0', addrlen);
+    PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
+    int fd = wrap->UVHandle()->fd;
+    if ((ret = getsockname(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen)) == -1) {
+        SetErrno(errno);
+        return Null();
+    }
+
+    /* If addrlen == 2 --> no path */
+    return addrlen == 2 ? Null() : scope.Close(String::New(sun.sun_path));
+}
+
 void Initialize(Handle<Object> target) {
 
     errno_symbol = Persistent<String>::New(String::NewSymbol("errno"));
@@ -87,6 +130,8 @@ void Initialize(Handle<Object> target) {
     target->Set(String::NewSymbol("SOCK_STREAM"), Integer::New(SOCK_STREAM));
     target->Set(String::NewSymbol("socket"), FunctionTemplate::New(Socket)->GetFunction());
     target->Set(String::NewSymbol("bind"), FunctionTemplate::New(Bind)->GetFunction());
+    target->Set(String::NewSymbol("getpeername"), FunctionTemplate::New(GetPeerName)->GetFunction());
+    target->Set(String::NewSymbol("getsockname"), FunctionTemplate::New(GetSockName)->GetFunction());
 }
 
 }
