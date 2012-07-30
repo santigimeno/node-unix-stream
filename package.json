@@ -1,24 +1,29 @@
 {
-  "author": {
-    "name": "Santiago Gimeno",
-    "email": "santiago.gimeno@gmail.com"
-  },
-  "name": "unix-stream",
-  "version": "0.0.1",
-  "description": "Unix stream socket",
-  "main": "src/unix_stream",
-  "engines": {
-    "node": ">=0.8.3"
-  },
-  "license": {
-    "type": "ISC",
-    "url": "https://github.com/santigimeno/node-unix-stream/blob/master/LICENSE"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/santigimeno/node-unix-stream.git"
-  },
-  "dependencies": {},
-  "devDependencies": {},
-  "optionalDependencies": {}
+    "author": {
+        "name": "Santiago Gimeno",
+        "email": "santiago.gimeno@gmail.com"
+    },
+    "name": "unix-stream",
+    "version": "0.0.1",
+    "description": "Unix stream socket",
+    "main": "src/unix_stream",
+    "engines": {
+        "node": ">=0.8.3"
+    },
+    "license": {
+        "type": "ISC",
+        "url": "https://github.com/santigimeno/node-unix-stream/blob/master/LICENSE"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/santigimeno/node-unix-stream.git"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "mocha": ">= 1.3.0"
+    },
+    "optionalDependencies": {},
+    "scripts" : {
+        "test" : "make test"
+    }
 }
