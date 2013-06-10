@@ -22,6 +22,29 @@ void SetErrno(int errorno) {
     Context::GetCurrent()->Global()->Set(errno_symbol, Integer::New(errorno));
 }
 
+void SetNonBlock(int fd) {
+    int flags;
+	int r;
+
+	flags = fcntl(fd, F_GETFL);
+	assert(flags != -1);
+
+	r = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	assert(r != -1);
+}
+
+
+void SetCloExec(int fd) {
+	int flags;
+	int r;
+
+	flags = fcntl(fd, F_GETFD);
+	assert(flags != -1);
+
+	r = fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+	assert(r != -1);
+}
+
 Handle<Value> Socket(const Arguments& args) {
     HandleScope scope;
     int protocol;
