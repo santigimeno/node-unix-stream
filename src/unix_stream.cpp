@@ -110,13 +110,12 @@ Handle<Value> GetPeerName(const Arguments& args) {
     assert(args.Length() == 1);
     Local<Object> obj = args[0]->ToObject();
     assert(obj->InternalFieldCount() > 0);
-    int ret;
     sockaddr_un sun;
     socklen_t addrlen = sizeof(sun);
     memset(&sun, '\0', addrlen);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
     int fd = wrap->UVHandle()->fd;
-    if ((ret = getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen)) == -1) {
+    if (getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
         SetErrno(errno);
         return Null();
     }
@@ -131,13 +130,12 @@ Handle<Value> GetSockName(const Arguments& args) {
     assert(args.Length() == 1);
     Local<Object> obj = args[0]->ToObject();
     assert(obj->InternalFieldCount() > 0);
-    int ret;
     sockaddr_un sun;
     socklen_t addrlen = sizeof(sun);
     memset(&sun, '\0', addrlen);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
     int fd = wrap->UVHandle()->fd;
-    if ((ret = getsockname(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen)) == -1) {
+    if (getsockname(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
         SetErrno(errno);
         return Null();
     }
