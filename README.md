@@ -56,3 +56,7 @@ server.listen('/tmp/remote_path', function() {
     });
 });
 ```
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/santigimeno/node-unix-stream/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
