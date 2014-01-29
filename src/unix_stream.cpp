@@ -2,9 +2,8 @@
 #undef  _GNU_SOURCE
 #define _GNU_SOURCE
 
-#include "uv.h"
-#include "node.h"
-#include "pipe_wrap.h"
+#include <nan.h>
+#include <pipe_wrap.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
@@ -14,12 +13,10 @@ using namespace node;
 
 namespace {
 
-Persistent<String> errno_symbol;
-
 void SetErrno(int errorno) {
     // set errno in the global context, this is the technique
     // that node uses to propagate system level errors to JS land
-    Context::GetCurrent()->Global()->Set(errno_symbol, Integer::New(errorno));
+    Context::GetCurrent()->Global()->Set(NanSymbol("errno"), Integer::New(errorno));
 }
 
 void SetNonBlock(int fd) {
@@ -45,8 +42,8 @@ void SetCloExec(int fd) {
 	assert(r != -1);
 }
 
-Handle<Value> Socket(const Arguments& args) {
-    HandleScope scope;
+NAN_METHOD(Socket) {
+    NanScope();
     int protocol;
     int domain;
     int type;
@@ -78,12 +75,12 @@ Handle<Value> Socket(const Arguments& args) {
 #endif
 
 out:
-    return scope.Close(Integer::New(fd));
+    NanReturnValue(Integer::New(fd));
 }
 
 
-Handle<Value> Bind(const Arguments& args) {
-    HandleScope scope;
+NAN_METHOD(Bind) {
+    NanScope();
     sockaddr_un sun;
     int fd;
     int ret;
@@ -101,12 +98,11 @@ Handle<Value> Bind(const Arguments& args) {
         SetErrno(errno);
     }
 
-    return scope.Close(Integer::New(ret));
+    NanReturnValue(Integer::New(ret));
 }
 
-Handle<Value> GetPeerName(const Arguments& args) {
-
-    HandleScope scope;
+NAN_METHOD(GetPeerName) {
+    NanScope();
     assert(args.Length() == 1);
     Local<Object> obj = args[0]->ToObject();
     assert(obj->InternalFieldCount() > 0);
@@ -114,19 +110,22 @@ Handle<Value> GetPeerName(const Arguments& args) {
     socklen_t addrlen = sizeof(sun);
     memset(&sun, '\0', addrlen);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
+#if NODE_VERSION_AT_LEAST(0, 9, 4)
+    int fd = wrap->UVHandle()->io_watcher.fd;
+#else
     int fd = wrap->UVHandle()->fd;
+#endif
     if (getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
         SetErrno(errno);
         return Null();
     }
 
     /* If addrlen == 2 --> no path */
-    return addrlen == 2 ? Null() : scope.Close(String::New(sun.sun_path));
+    NanReturnValue(addrlen == 2 ? Null() : String::New(sun.sun_path));
 }
 
-Handle<Value> GetSockName(const Arguments& args) {
-
-    HandleScope scope;
+NAN_METHOD(GetSockName) {
+    NanScope();
     assert(args.Length() == 1);
     Local<Object> obj = args[0]->ToObject();
     assert(obj->InternalFieldCount() > 0);
@@ -134,25 +133,27 @@ Handle<Value> GetSockName(const Arguments& args) {
     socklen_t addrlen = sizeof(sun);
     memset(&sun, '\0', addrlen);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
+#if NODE_VERSION_AT_LEAST(0, 9, 4)
+    int fd = wrap->UVHandle()->io_watcher.fd;
+#else
     int fd = wrap->UVHandle()->fd;
+#endif
     if (getsockname(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
         SetErrno(errno);
         return Null();
     }
 
     /* If addrlen == 2 --> no path */
-    return addrlen == 2 ? Null() : scope.Close(String::New(sun.sun_path));
+    NanReturnValue(addrlen == 2 ? Null() : String::New(sun.sun_path));
 }
 
 void Initialize(Handle<Object> target) {
-
-    errno_symbol = Persistent<String>::New(String::NewSymbol("errno"));
-    target->Set(String::NewSymbol("AF_UNIX"), Integer::New(AF_UNIX));
-    target->Set(String::NewSymbol("SOCK_STREAM"), Integer::New(SOCK_STREAM));
-    target->Set(String::NewSymbol("socket"), FunctionTemplate::New(Socket)->GetFunction());
-    target->Set(String::NewSymbol("bind"), FunctionTemplate::New(Bind)->GetFunction());
-    target->Set(String::NewSymbol("getpeername"), FunctionTemplate::New(GetPeerName)->GetFunction());
-    target->Set(String::NewSymbol("getsockname"), FunctionTemplate::New(GetSockName)->GetFunction());
+    target->Set(NanSymbol("AF_UNIX"), Integer::New(AF_UNIX));
+    target->Set(NanSymbol("SOCK_STREAM"), Integer::New(SOCK_STREAM));
+    target->Set(NanSymbol("socket"), FunctionTemplate::New(Socket)->GetFunction());
+    target->Set(NanSymbol("bind"), FunctionTemplate::New(Bind)->GetFunction());
+    target->Set(NanSymbol("getpeername"), FunctionTemplate::New(GetPeerName)->GetFunction());
+    target->Set(NanSymbol("getsockname"), FunctionTemplate::New(GetSockName)->GetFunction());
 }
 
 }

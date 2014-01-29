@@ -4,7 +4,7 @@ var Socket = require('net').Socket;
 
 /* Make sure we choose the correct build directory */
 var directory = process.config.target_defaults.default_configuration === 'Debug' ? 'Debug' : 'Release';
-var bindings = require(__dirname + '/../build/' + directory + '/unix_stream.node');
+var bindings = require('bindings')('unix_stream.node');
 
 /* bindings from C++ */
 var SOCK_STREAM = bindings.SOCK_STREAM;
