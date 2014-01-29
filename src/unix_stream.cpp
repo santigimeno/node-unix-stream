@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
+#include <node_version.h>
 
 using namespace v8;
 using namespace node;
@@ -114,7 +115,11 @@ Handle<Value> GetPeerName(const Arguments& args) {
     socklen_t addrlen = sizeof(sun);
     memset(&sun, '\0', addrlen);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
+#if NODE_VERSION_AT_LEAST(0, 9, 4)
+    int fd = wrap->UVHandle()->io_watcher.fd;
+#else
     int fd = wrap->UVHandle()->fd;
+#endif
     if (getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
         SetErrno(errno);
         return Null();
@@ -134,7 +139,11 @@ Handle<Value> GetSockName(const Arguments& args) {
     socklen_t addrlen = sizeof(sun);
     memset(&sun, '\0', addrlen);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
+#if NODE_VERSION_AT_LEAST(0, 9, 4)
+    int fd = wrap->UVHandle()->io_watcher.fd;
+#else
     int fd = wrap->UVHandle()->fd;
+#endif
     if (getsockname(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
         SetErrno(errno);
         return Null();
