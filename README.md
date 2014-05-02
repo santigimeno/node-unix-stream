@@ -6,16 +6,22 @@ node-unix-stream
 At the moment, node does not support unix stream connections from a socket bound to a local path. As stated in
 https://github.com/joyent/node/issues/3705, it likely won't be supported as Windows doesn't have this feature.
 
-This module adds this functionality and expands net.Socket to add a __remotePath__ getter and a __path()__ functions
-that implement a similar functionality to __remoteAddress__ and __address()__ for unix stream sockets.
+This module adds this functionality and expands net.Socket to add __localPath__ and __remotePath__ getters and a __path()__ functions
+that implement a similar functionality to __localAddress__ and __remoteAddress__ and __address()__ for unix stream sockets.
 
+Installation
+------------
+
+```
+npm install unix-stream
+```
 
 Example
 =======
 ```
 var net = require('net');
 var fs = require('fs');
-var unix = require('../src/unix_stream');
+var unix = require('unix-stream');
 
 // Create Unix socket Server bound to /tmp/remote_path
 if (fs.existsSync('/tmp/remote_path')) {
@@ -47,7 +53,8 @@ server.listen('/tmp/remote_path', function() {
 
     // Connect to /tmp/remote_path
     socket.connect({ path : '/tmp/remote_path' }, function() {
-        console.log("[Client] Client bound to: " + this.path() + " connected to: " + this.remotePath);
+        console.log("[Client] Client bound to: " + this.localPath + 
+                    " connected to: " + this.remotePath);
     });
 
     socket.on('data', function(data) {
