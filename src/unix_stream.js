@@ -1,9 +1,6 @@
 var util = require('util');
-var net = require('net');
 var Socket = require('net').Socket;
 
-/* Make sure we choose the correct build directory */
-var directory = process.config.target_defaults.default_configuration === 'Debug' ? 'Debug' : 'Release';
 var bindings = require('bindings')('unix_stream.node');
 
 /* bindings from C++ */
@@ -15,7 +12,6 @@ var getsockname = bindings.getsockname;
 var socket = bindings.socket;
 
 function errnoException(errorno, syscall) {
-
     var e = new Error(syscall + ' ' + errorno);
     e.errno = e.code = errorno;
     e.syscall = syscall;
@@ -30,9 +26,11 @@ exports.createSocket = function(local_path) {
 
     var s = new Socket(fd);
     if (local_path) {
-        if (bind(fd, local_path) == -1) {
+        var r = bind(fd, local_path);
+        if (r < 0) {
+            s.destroy();
             process.nextTick(function() {
-                s.emit('error', errnoException(errno, 'bind'));
+                s.emit('error', errnoException(r, 'bind'));
             });
         }
 
@@ -46,8 +44,10 @@ exports.createSocket = function(local_path) {
 Object.defineProperty(Socket.prototype, "remotePath", {
     get : function remotePath() {
         var addr = getpeername(this._handle);
-        if (!addr && (typeof errno !== 'undefined'))
-            this.emit('error', errnoException(errno, 'getpeername'));
+        if (addr < 0) {
+            throw errnoException(addr, 'getpeername');
+        }
+
         return addr;
     }
 });
@@ -57,7 +57,9 @@ Socket.prototype.path = function() {
 
     if (this.local_path) return this.local_path;
     var addr = getsockname(this._handle);
-    if (!addr && (typeof errno !== 'undefined'))
-        this.emit('error', errnoException(errno, 'getsockname'));
+    if (addr < 0) {
+         throw errnoException(addr, 'getsockname');
+    } 	
+
     return addr;
 }

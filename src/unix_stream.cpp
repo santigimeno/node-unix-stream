@@ -13,12 +13,6 @@ using namespace node;
 
 namespace {
 
-void SetErrno(int errorno) {
-    // set errno in the global context, this is the technique
-    // that node uses to propagate system level errors to JS land
-    Context::GetCurrent()->Global()->Set(NanSymbol("errno"), Integer::New(errorno));
-}
-
 void SetNonBlock(int fd) {
     int flags;
 	int r;
@@ -63,7 +57,7 @@ NAN_METHOD(Socket) {
 #endif
 
     if ((fd = socket(domain, type, protocol)) == -1) {
-        SetErrno(errno);
+        fd = -errno;
         goto out;
     }
 
@@ -90,12 +84,12 @@ NAN_METHOD(Bind) {
     fd = args[0]->Int32Value();
     String::Utf8Value path(args[1]);
 
+    memset(&sun, 0, sizeof(sun));
     strncpy(sun.sun_path, *path, sizeof(sun.sun_path) - 1);
-    sun.sun_path[sizeof(sun.sun_path) - 1] = '\0';
     sun.sun_family = AF_UNIX;
 
     if ((ret = bind(fd, reinterpret_cast<sockaddr*>(&sun), sizeof(sun))) == -1) {
-        SetErrno(errno);
+        ret = -errno;
     }
 
     NanReturnValue(Integer::New(ret));
@@ -108,7 +102,7 @@ NAN_METHOD(GetPeerName) {
     assert(obj->InternalFieldCount() > 0);
     sockaddr_un sun;
     socklen_t addrlen = sizeof(sun);
-    memset(&sun, '\0', addrlen);
+    memset(&sun, 0, addrlen);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
 #if NODE_VERSION_AT_LEAST(0, 9, 4)
     int fd = wrap->UVHandle()->io_watcher.fd;
@@ -116,8 +110,7 @@ NAN_METHOD(GetPeerName) {
     int fd = wrap->UVHandle()->fd;
 #endif
     if (getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
-        SetErrno(errno);
-        return Null();
+        NanReturnValue(Integer::New(-errno));
     }
 
     /* If addrlen == 2 --> no path */
@@ -131,7 +124,7 @@ NAN_METHOD(GetSockName) {
     assert(obj->InternalFieldCount() > 0);
     sockaddr_un sun;
     socklen_t addrlen = sizeof(sun);
-    memset(&sun, '\0', addrlen);
+    memset(&sun, 0, addrlen);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
 #if NODE_VERSION_AT_LEAST(0, 9, 4)
     int fd = wrap->UVHandle()->io_watcher.fd;
@@ -139,8 +132,7 @@ NAN_METHOD(GetSockName) {
     int fd = wrap->UVHandle()->fd;
 #endif
     if (getsockname(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
-        SetErrno(errno);
-        return Null();
+        NanReturnValue(Integer::New(-errno));
     }
 
     /* If addrlen == 2 --> no path */
