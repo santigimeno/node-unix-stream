@@ -41,25 +41,29 @@ exports.createSocket = function(local_path) {
 };
 
 /* getter property to retrieve the remote path of a established connection*/
-Object.defineProperty(Socket.prototype, "remotePath", {
-    get : function remotePath() {
-        var addr = getpeername(this._handle);
-        if (addr < 0) {
-            throw errnoException(addr, 'getpeername');
-        }
-
-        return addr;
+Socket.prototype.__defineGetter__('remotePath', function() {
+    var addr = getpeername(this._handle);
+    if (addr < 0) {
+         throw errnoException(addr, 'getpeername');
     }
+
+    return addr;
 });
 
-/* function to retrieve the path a unix socket is bound to */
+/* getter property to retrieve the local path a unix socket is bound to */
 Socket.prototype.path = function() {
+    if (this.local_path) {
+        return this.local_path;
+    }
 
-    if (this.local_path) return this.local_path;
     var addr = getsockname(this._handle);
     if (addr < 0) {
          throw errnoException(addr, 'getsockname');
     } 	
 
     return addr;
-}
+};
+
+Socket.prototype.__defineGetter__('localPath', function() {
+    return this.path();
+});

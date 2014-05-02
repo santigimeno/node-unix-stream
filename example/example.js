@@ -32,7 +32,7 @@ server.listen('/tmp/remote_path', function() {
 
     // Connect to /tmp/remote_path
     socket.connect({ path : '/tmp/remote_path' }, function() {
-        console.log("[Client] Client bound to: " + this.path() + " connected to: " + this.remotePath);
+        console.log("[Client] Client bound to: " + this.localPath + " connected to: " + this.remotePath);
     });
 
     socket.on('data', function(data) {
