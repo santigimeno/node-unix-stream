@@ -35,7 +35,7 @@ describe('Echo server', function() {
             assert.equal(con.remotePath, self.socket.path());
             done();
         })
-        
+
         this.socket = unix.createSocket('/tmp/local_path');
         this.socket.connect({ path : '/tmp/remote_path' });
     });

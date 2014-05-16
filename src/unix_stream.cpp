@@ -3,7 +3,9 @@
 #define _GNU_SOURCE
 
 #include <nan.h>
+#if !NODE_VERSION_AT_LEAST(0, 9, 10)
 #include <pipe_wrap.h>
+#endif
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
@@ -69,7 +71,7 @@ NAN_METHOD(Socket) {
 #endif
 
 out:
-    NanReturnValue(Integer::New(fd));
+    NanReturnValue(NanNew<Integer>(fd));
 }
 
 
@@ -92,60 +94,80 @@ NAN_METHOD(Bind) {
         ret = -errno;
     }
 
-    NanReturnValue(Integer::New(ret));
+    NanReturnValue(NanNew<Integer>(ret));
 }
 
 NAN_METHOD(GetPeerName) {
     NanScope();
+    int fd;
     assert(args.Length() == 1);
+#if NODE_VERSION_AT_LEAST(0, 9, 10)
+    fd = args[0]->Int32Value();
+#else
     Local<Object> obj = args[0]->ToObject();
     assert(obj->InternalFieldCount() > 0);
+    PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
+#if NODE_VERSION_AT_LEAST(0, 9, 4)
+    fd = wrap->UVHandle()->io_watcher.fd;
+#else
+    fd = wrap->UVHandle()->fd;
+#endif
+#endif
+
     sockaddr_un sun;
     socklen_t addrlen = sizeof(sun);
     memset(&sun, 0, addrlen);
-    PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
-#if NODE_VERSION_AT_LEAST(0, 9, 4)
-    int fd = wrap->UVHandle()->io_watcher.fd;
-#else
-    int fd = wrap->UVHandle()->fd;
-#endif
     if (getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
-        NanReturnValue(Integer::New(-errno));
+        NanReturnValue(NanNew<Integer>(-errno));
     }
 
     /* If addrlen == 2 --> no path */
-    NanReturnValue(addrlen == 2 ? Null() : String::New(sun.sun_path));
+    if (addrlen == 2) {
+        NanReturnNull();
+    } else {
+        NanReturnValue(NanNew<String>(sun.sun_path));
+    }
 }
 
 NAN_METHOD(GetSockName) {
     NanScope();
+    int fd;
     assert(args.Length() == 1);
+#if NODE_VERSION_AT_LEAST(0, 9, 10)
+    fd = args[0]->Int32Value();
+#else
     Local<Object> obj = args[0]->ToObject();
     assert(obj->InternalFieldCount() > 0);
+    PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
+#if NODE_VERSION_AT_LEAST(0, 9, 4)
+    fd = wrap->UVHandle()->io_watcher.fd;
+#else
+    fd = wrap->UVHandle()->fd;
+#endif
+#endif
+
     sockaddr_un sun;
     socklen_t addrlen = sizeof(sun);
     memset(&sun, 0, addrlen);
-    PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
-#if NODE_VERSION_AT_LEAST(0, 9, 4)
-    int fd = wrap->UVHandle()->io_watcher.fd;
-#else
-    int fd = wrap->UVHandle()->fd;
-#endif
     if (getsockname(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
-        NanReturnValue(Integer::New(-errno));
+        NanReturnValue(NanNew<Integer>(-errno));
     }
 
     /* If addrlen == 2 --> no path */
-    NanReturnValue(addrlen == 2 ? Null() : String::New(sun.sun_path));
+    if (addrlen == 2) {
+        NanReturnNull();
+    } else {
+        NanReturnValue(NanNew<String>(sun.sun_path));
+    }
 }
 
 void Initialize(Handle<Object> target) {
-    target->Set(NanSymbol("AF_UNIX"), Integer::New(AF_UNIX));
-    target->Set(NanSymbol("SOCK_STREAM"), Integer::New(SOCK_STREAM));
-    target->Set(NanSymbol("socket"), FunctionTemplate::New(Socket)->GetFunction());
-    target->Set(NanSymbol("bind"), FunctionTemplate::New(Bind)->GetFunction());
-    target->Set(NanSymbol("getpeername"), FunctionTemplate::New(GetPeerName)->GetFunction());
-    target->Set(NanSymbol("getsockname"), FunctionTemplate::New(GetSockName)->GetFunction());
+    target->Set(NanSymbol("AF_UNIX"), NanNew<Integer>(AF_UNIX));
+    target->Set(NanSymbol("SOCK_STREAM"), NanNew<Integer>(SOCK_STREAM));
+    target->Set(NanSymbol("socket"), NanNew<FunctionTemplate>(Socket)->GetFunction());
+    target->Set(NanSymbol("bind"), NanNew<FunctionTemplate>(Bind)->GetFunction());
+    target->Set(NanSymbol("getpeername"), NanNew<FunctionTemplate>(GetPeerName)->GetFunction());
+    target->Set(NanSymbol("getsockname"), NanNew<FunctionTemplate>(GetSockName)->GetFunction());
 }
 
 }
