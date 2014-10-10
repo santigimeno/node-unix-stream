@@ -4,7 +4,7 @@
         "email": "santiago.gimeno@gmail.com"
     },
     "name": "unix-stream",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Unix stream socket",
     "keywords": [
         "unix",
