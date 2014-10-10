@@ -162,12 +162,12 @@ NAN_METHOD(GetSockName) {
 }
 
 void Initialize(Handle<Object> target) {
-    target->Set(NanSymbol("AF_UNIX"), NanNew<Integer>(AF_UNIX));
-    target->Set(NanSymbol("SOCK_STREAM"), NanNew<Integer>(SOCK_STREAM));
-    target->Set(NanSymbol("socket"), NanNew<FunctionTemplate>(Socket)->GetFunction());
-    target->Set(NanSymbol("bind"), NanNew<FunctionTemplate>(Bind)->GetFunction());
-    target->Set(NanSymbol("getpeername"), NanNew<FunctionTemplate>(GetPeerName)->GetFunction());
-    target->Set(NanSymbol("getsockname"), NanNew<FunctionTemplate>(GetSockName)->GetFunction());
+    target->Set(NanNew("AF_UNIX"), NanNew(AF_UNIX));
+    target->Set(NanNew("SOCK_STREAM"), NanNew(SOCK_STREAM));
+    target->Set(NanNew("socket"), NanNew<FunctionTemplate>(Socket)->GetFunction());
+    target->Set(NanNew("bind"), NanNew<FunctionTemplate>(Bind)->GetFunction());
+    target->Set(NanNew("getpeername"), NanNew<FunctionTemplate>(GetPeerName)->GetFunction());
+    target->Set(NanNew("getsockname"), NanNew<FunctionTemplate>(GetSockName)->GetFunction());
 }
 
 }
