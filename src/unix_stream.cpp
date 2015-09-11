@@ -17,39 +17,40 @@ namespace {
 
 void SetNonBlock(int fd) {
     int flags;
-	int r;
+    int r;
 
-	flags = fcntl(fd, F_GETFL);
-	assert(flags != -1);
+    flags = fcntl(fd, F_GETFL);
+    assert(flags != -1);
 
-	r = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-	assert(r != -1);
+    r = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    assert(r != -1);
 }
 
 
 void SetCloExec(int fd) {
-	int flags;
-	int r;
+    int flags;
+    int r;
 
-	flags = fcntl(fd, F_GETFD);
-	assert(flags != -1);
+    flags = fcntl(fd, F_GETFD);
+    assert(flags != -1);
 
-	r = fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
-	assert(r != -1);
+    r = fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+    assert(r != -1);
 }
 
 NAN_METHOD(Socket) {
-    NanScope();
+    Nan::HandleScope scope;
+
     int protocol;
     int domain;
     int type;
     int fd;
 
-    assert(args.Length() == 3);
+    assert(info.Length() == 3);
 
-    domain    = args[0]->Int32Value();
-    type      = args[1]->Int32Value();
-    protocol  = args[2]->Int32Value();
+    domain    = info[0]->Int32Value();
+    type      = info[1]->Int32Value();
+    protocol  = info[2]->Int32Value();
 
 #if defined(SOCK_NONBLOCK)
     type |= SOCK_NONBLOCK;
@@ -71,20 +72,21 @@ NAN_METHOD(Socket) {
 #endif
 
 out:
-    NanReturnValue(NanNew<Integer>(fd));
+    info.GetReturnValue().Set(fd);
 }
 
 
 NAN_METHOD(Bind) {
-    NanScope();
+    Nan::HandleScope scope;
+
     sockaddr_un sun;
     int fd;
     int ret;
 
-    assert(args.Length() == 2);
+    assert(info.Length() == 2);
 
-    fd = args[0]->Int32Value();
-    String::Utf8Value path(args[1]);
+    fd = info[0]->Int32Value();
+    String::Utf8Value path(info[1]);
 
     memset(&sun, 0, sizeof(sun));
     strncpy(sun.sun_path, *path, sizeof(sun.sun_path) - 1);
@@ -94,17 +96,18 @@ NAN_METHOD(Bind) {
         ret = -errno;
     }
 
-    NanReturnValue(NanNew<Integer>(ret));
+    info.GetReturnValue().Set(ret);
 }
 
 NAN_METHOD(GetPeerName) {
-    NanScope();
+    Nan::HandleScope scope;
+
     int fd;
-    assert(args.Length() == 1);
+    assert(info.Length() == 1);
 #if NODE_VERSION_AT_LEAST(0, 9, 10)
-    fd = args[0]->Int32Value();
+    fd = info[0]->Int32Value();
 #else
-    Local<Object> obj = args[0]->ToObject();
+    Local<Object> obj = info[0]->ToObject();
     assert(obj->InternalFieldCount() > 0);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
 #if NODE_VERSION_AT_LEAST(0, 9, 4)
@@ -118,25 +121,27 @@ NAN_METHOD(GetPeerName) {
     socklen_t addrlen = sizeof(sun);
     memset(&sun, 0, addrlen);
     if (getpeername(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
-        NanReturnValue(NanNew<Integer>(-errno));
+        info.GetReturnValue().Set(-errno);
+        return;
     }
 
     /* If addrlen == 2 --> no path */
     if (addrlen == 2) {
-        NanReturnNull();
+        info.GetReturnValue().SetNull();
     } else {
-        NanReturnValue(NanNew<String>(sun.sun_path));
+        info.GetReturnValue().Set(Nan::New(sun.sun_path).ToLocalChecked());
     }
 }
 
 NAN_METHOD(GetSockName) {
-    NanScope();
+    Nan::HandleScope scope;
+
     int fd;
-    assert(args.Length() == 1);
+    assert(info.Length() == 1);
 #if NODE_VERSION_AT_LEAST(0, 9, 10)
-    fd = args[0]->Int32Value();
+    fd = info[0]->Int32Value();
 #else
-    Local<Object> obj = args[0]->ToObject();
+    Local<Object> obj = info[0]->ToObject();
     assert(obj->InternalFieldCount() > 0);
     PipeWrap* wrap = static_cast<PipeWrap*>(obj->GetPointerFromInternalField(0));
 #if NODE_VERSION_AT_LEAST(0, 9, 4)
@@ -150,24 +155,31 @@ NAN_METHOD(GetSockName) {
     socklen_t addrlen = sizeof(sun);
     memset(&sun, 0, addrlen);
     if (getsockname(fd, reinterpret_cast<sockaddr*>(&sun), &addrlen) == -1) {
-        NanReturnValue(NanNew<Integer>(-errno));
+        info.GetReturnValue().Set(-errno);
+        return;
     }
 
     /* If addrlen == 2 --> no path */
     if (addrlen == 2) {
-        NanReturnNull();
+        info.GetReturnValue().SetNull();
     } else {
-        NanReturnValue(NanNew<String>(sun.sun_path));
+        info.GetReturnValue().Set(Nan::New(sun.sun_path).ToLocalChecked());
     }
 }
 
-void Initialize(Handle<Object> target) {
-    target->Set(NanNew("AF_UNIX"), NanNew(AF_UNIX));
-    target->Set(NanNew("SOCK_STREAM"), NanNew(SOCK_STREAM));
-    target->Set(NanNew("socket"), NanNew<FunctionTemplate>(Socket)->GetFunction());
-    target->Set(NanNew("bind"), NanNew<FunctionTemplate>(Bind)->GetFunction());
-    target->Set(NanNew("getpeername"), NanNew<FunctionTemplate>(GetPeerName)->GetFunction());
-    target->Set(NanNew("getsockname"), NanNew<FunctionTemplate>(GetSockName)->GetFunction());
+void Initialize(Local<Object> target) {
+    target->Set(Nan::New("AF_UNIX").ToLocalChecked(),
+                Nan::New(AF_UNIX));
+    target->Set(Nan::New("SOCK_STREAM").ToLocalChecked(),
+                Nan::New(SOCK_STREAM));
+    target->Set(Nan::New("socket").ToLocalChecked(),
+                Nan::New<FunctionTemplate>(Socket)->GetFunction());
+    target->Set(Nan::New("bind").ToLocalChecked(),
+                Nan::New<FunctionTemplate>(Bind)->GetFunction());
+    target->Set(Nan::New("getpeername").ToLocalChecked(),
+                Nan::New<FunctionTemplate>(GetPeerName)->GetFunction());
+    target->Set(Nan::New("getsockname").ToLocalChecked(),
+                Nan::New<FunctionTemplate>(GetSockName)->GetFunction());
 }
 
 }
