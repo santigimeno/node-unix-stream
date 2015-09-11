@@ -125,8 +125,7 @@ NAN_METHOD(GetPeerName) {
         return;
     }
 
-    /* If addrlen == 2 --> no path */
-    if (addrlen == 2) {
+    if (strlen(sun.sun_path) == 0) {
         info.GetReturnValue().SetNull();
     } else {
         info.GetReturnValue().Set(Nan::New(sun.sun_path).ToLocalChecked());
@@ -159,8 +158,7 @@ NAN_METHOD(GetSockName) {
         return;
     }
 
-    /* If addrlen == 2 --> no path */
-    if (addrlen == 2) {
+    if (strlen(sun.sun_path) == 0) {
         info.GetReturnValue().SetNull();
     } else {
         info.GetReturnValue().Set(Nan::New(sun.sun_path).ToLocalChecked());
