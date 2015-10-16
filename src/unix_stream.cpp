@@ -15,7 +15,7 @@ using namespace node;
 
 namespace {
 
-void SetNonBlock(int fd) {
+inline void SetNonBlock(int fd) {
     int flags;
     int r;
 
@@ -27,7 +27,7 @@ void SetNonBlock(int fd) {
 }
 
 
-void SetCloExec(int fd) {
+inline void SetCloExec(int fd) {
     int flags;
     int r;
 
